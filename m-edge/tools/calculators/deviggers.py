@@ -55,7 +55,7 @@ def devig_2way(
     - Returned odds are **American** odds.
     - Caller is responsible for any format conversions outside this function.
     """
-    pass
+    return 0
 
 
 def devig_nway(

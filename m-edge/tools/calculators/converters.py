@@ -45,7 +45,7 @@ def american_to_decimal(american_odds: int) -> float:
     Returns:
         float: Decimal odds.
     """
-    pass
+    return 0
 
 
 def decimal_to_american(decimal_odds: float) -> int:
