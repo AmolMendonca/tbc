@@ -6,7 +6,7 @@ Converters module for M-Edge tools.
 from fractions import Fraction
 from typing import Tuple
 
-
+# fraction return as numerator, denominator pair
 def decimal_to_fractional(decimal_odds: float) -> Tuple[int, int]:
     """
     Convert decimal odds to fractional odds.
