@@ -110,4 +110,30 @@ def devig_nway(
     - Returned odds are **American** odds.
     - Caller is responsible for any format conversions outside this function.
     """
-    pass
+    if method != "additive":
+        raise NotImplementedError(f"Method '{method}' not available yet.")
+
+    # Step 1: Convert each American odd -> implied probability
+    implied_probs = []
+    for o in odds:
+        dec = american_to_decimal(o)
+        implied = decimal_to_implied(dec)
+        implied_probs.append(implied)
+
+    # Step 2: Compute total book
+    total_book = sum(implied_probs)
+
+    # Step 3: Vig percentage (overround)
+    vig_pct = (total_book - 1.0) * 100
+
+    # Step 4: Normalize probs (divide each by total_book)
+    devigged_probs = [p / total_book for p in implied_probs]
+
+    # Step 5: Convert back to American odds
+    devigged_odds = []
+    for p in devigged_probs:
+        dec = implied_to_decimal(p)
+        am = decimal_to_american(dec)
+        devigged_odds.append(am)
+
+    return vig_pct, devigged_odds
