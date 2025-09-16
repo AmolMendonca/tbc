@@ -12,50 +12,71 @@ Supported methods (select via `method` arg):
 - "power"       : power method fit
 - "shin"        : Shin’s method for insider trading bias
 
-NOTE: These are stubs only; implementations are intentionally omitted.
 """
 
 from typing import Iterable, List, Literal, Tuple
+from converters import decimal_to_american, american_to_decimal, decimal_to_implied, implied_to_decimal
+
 
 
 DevigMethod = Literal["additive", "subtractive", "power", "shin"]
 
 
-def devig_2way(
-    odds_a: int,
-    odds_b: int,
-    method: DevigMethod = "additive",
-) -> Tuple[float, int, int]:
+
+def devig_2way(odds1: int, odds2: int, method: str = "additive") -> Tuple[float, int, int]:
     """
-    De-vig a 2-way market given **American** odds.
+    De-vig a 2-way market given American odds using the specified method.
 
-    Parameters
-    ----------
-    odds_a : int
-        American odds for outcome A (may be positive or negative).
-    odds_b : int
-        American odds for outcome B (may be positive or negative).
-    method : {'additive','subtractive','power','shin'}, optional
-        De-vigging method to use. Defaults to 'additive'.
+    Args:
+        odds1 (int): American odds for outcome 1.
+        odds2 (int): American odds for outcome 2.
+        method (str): De-vigging method. Supported: "additive".
+                      Others ("shin", "subtractive", "power") will raise for now.
 
-    Returns
-    -------
-    Tuple[float, int, int]
-        A tuple:
-        - vig_pct : float
-            The implied overround (vig) as a percentage (e.g., 6.25 for 6.25%).
-        - devig_a : int
-            De-vigged **American** odds for outcome A (same order as input).
-        - devig_b : int
-            De-vigged **American** odds for outcome B (same order as input).
+    Returns:
+        Tuple[float, int, int]: (vig_percent, devigged_odds1, devigged_odds2)
+            - vig_percent: Overround as a percentage (e.g., 7.0 for a 1.07 book).
+            - devigged_odds1: Vig-free American odds for outcome 1.
+            - devigged_odds2: Vig-free American odds for outcome 2.
 
-    Notes
-    -----
-    - Inputs MUST be American odds.
-    - Returned odds are **American** odds.
-    - Caller is responsible for any format conversions outside this function.
+    Raises:
+        ValueError: If inputs are invalid or normalization fails.
+        NotImplementedError: If method is not available yet.
     """
-    return 0
+    if method.lower() != "additive":
+        raise NotImplementedError(f"{method} method not available yet")
+
+    # Convert American -> Decimal -> Implied
+    dec1 = american_to_decimal(odds1)
+    dec2 = american_to_decimal(odds2)
+
+    if dec1 <= 1.0 or dec2 <= 1.0:
+        raise ValueError("Decimal odds must be > 1.0 after conversion from American.")
+
+    p1 = decimal_to_implied(dec1)  # = 1/dec1
+    p2 = decimal_to_implied(dec2)  # = 1/dec2
+
+    # Total book and vig (as %)
+    book = p1 + p2
+    if book <= 0:
+        raise ValueError("Invalid probabilities: sum(book) <= 0.")
+
+    vig_percent = (book - 1.0) * 100.0
+
+    
+    p1_vf = p1 / book
+    p2_vf = p2 / book
+
+    d1_vf = implied_to_decimal(p1_vf)   # = 1/p1_vf
+    d2_vf = implied_to_decimal(p2_vf)   # = 1/p2_vf
+
+    if d1_vf <= 1.0 or d2_vf <= 1.0:
+        raise ValueError("Vig-free decimal odds must be > 1.0.")
+
+    o1_vf = decimal_to_american(d1_vf)
+    o2_vf = decimal_to_american(d2_vf)
+
+    return round(vig_percent, 2), o1_vf, o2_vf
 
 
 def devig_nway(

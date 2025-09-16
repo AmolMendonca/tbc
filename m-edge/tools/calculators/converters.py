@@ -1,7 +1,6 @@
 # converters.py
 """
 Converters module for M-Edge tools.
-Provides stub functions for common odds format conversions.
 """
 
 from fractions import Fraction
@@ -13,12 +12,15 @@ def decimal_to_fractional(decimal_odds: float) -> Tuple[int, int]:
     Convert decimal odds to fractional odds.
 
     Args:
-        decimal_odds (float): Decimal odds value.
+        decimal_odds (float): Decimal odds value (> 1.0).
 
     Returns:
         Tuple[int, int]: Fractional odds (numerator, denominator).
     """
-    pass
+    if decimal_odds <= 1.0:
+        raise ValueError("Decimal odds must be greater than 1.0")
+    frac = Fraction(decimal_odds - 1).limit_denominator()
+    return frac.numerator, frac.denominator
 
 
 def fractional_to_decimal(numerator: int, denominator: int) -> float:
@@ -32,7 +34,9 @@ def fractional_to_decimal(numerator: int, denominator: int) -> float:
     Returns:
         float: Decimal odds.
     """
-    pass
+    if denominator <= 0:
+        raise ValueError("Denominator must be positive")
+    return (numerator / denominator) + 1.0
 
 
 def american_to_decimal(american_odds: int) -> float:
@@ -45,7 +49,12 @@ def american_to_decimal(american_odds: int) -> float:
     Returns:
         float: Decimal odds.
     """
-    return 0
+    if american_odds == 0:
+        raise ValueError("American odds cannot be 0")
+    if american_odds > 0:
+        return (american_odds / 100.0) + 1.0
+    else:
+        return (100.0 / abs(american_odds)) + 1.0
 
 
 def decimal_to_american(decimal_odds: float) -> int:
@@ -58,7 +67,12 @@ def decimal_to_american(decimal_odds: float) -> int:
     Returns:
         int: American odds (positive or negative).
     """
-    pass
+    if decimal_odds < 1.0:
+        raise ValueError("Decimal odds must be >= 1.0")
+    if decimal_odds >= 2.0:
+        return int((decimal_odds - 1.0) * 100)
+    else:
+        return int(-100 / (decimal_odds - 1.0))
 
 
 def decimal_to_implied(decimal_odds: float) -> float:
@@ -71,7 +85,9 @@ def decimal_to_implied(decimal_odds: float) -> float:
     Returns:
         float: Implied probability (0 to 1).
     """
-    pass
+    if decimal_odds <= 1.0:
+        raise ValueError("Decimal odds must be greater than 1.0")
+    return 1.0 / decimal_odds
 
 
 def implied_to_decimal(implied_prob: float) -> float:
@@ -84,4 +100,6 @@ def implied_to_decimal(implied_prob: float) -> float:
     Returns:
         float: Decimal odds value.
     """
-    pass
+    if implied_prob <= 0 or implied_prob > 1:
+        raise ValueError("Implied probability must be in (0, 1]")
+    return 1.0 / implied_prob
